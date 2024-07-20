@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leschik's Law vs Moore's Law: Interactive Presentation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        .slider {
+            width: 100%;
+        }
+        .animation-container {
+            width: 100%;
+            height: 200px;
+            background-color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+        .node {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #3498db;
+            position: absolute;
+            top: 75px;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leschik's Law vs Moore's Law: Interactive Presentation</h1>
+    
+    <h2>1. Comparison of Growth Trajectories</h2>
+    <p>This chart compares the growth trajectories of Moore's Law and Leschik's Law over time.</p>
+    <div class="chart-container">
+        <canvas id="comparisonChart"></canvas>
+    </div>
+
+    <h2>2. Impact of Doubling Period (N) in Leschik's Law</h2>
+    <p>Adjust the slider to see how changing the doubling period (N) affects the growth curve in Leschik's Law.</p>
+    <div class="slider-container">
+        <input type="range" min="6" max="24" value="12" class="slider" id="nSlider">
+        <p>N: <span id="nValue"></span> months</p>
+    </div>
+    <div class="chart-container">
+        <canvas id="nImpactChart"></canvas>
+    </div>
+
+    <h2>3. Exponential Growth Animation</h2>
+    <p>This animation visualizes the exponential growth described by Leschik's Law.</p>
+    <div class="animation-container">
+        <div class="node"></div>
+    </div>
+
+    <h2>4. Cost Reduction in Leschik's Law</h2>
+    <p>This graph demonstrates how Leschik's Law predicts cost reduction over time.</p>
+    <div class="chart-container">
+        <canvas id="costReductionChart"></canvas>
+    </div>
+
+    <h2>5. Performance/Cost Ratio</h2>
+    <p>This chart shows how the performance-to-cost ratio improves over time according to Leschik's Law.</p>
+    <div class="chart-container">
+        <canvas id="performanceCostRatioChart"></canvas>
+    </div>
+
+    <script>
+        // Utility functions
+        function mooresLaw(t, initialValue = 1) {
+            return initialValue * Math.pow(2, t / 24);
+        }
+
+        function leschiksLaw(t, N, initialValue = 1, speedupFactor = 1.1, ethicalFactor = 0.9, scalabilityFactor = 1.05) {
+            return initialValue * Math.pow(2, t / N) * Math.pow(speedupFactor, t) * ethicalFactor * scalabilityFactor;
+        }
+
+        function leschiksLawCost(t, N, initialCost = 100, speedupFactor = 1.1, scalabilityFactor = 1.05) {
+            return initialCost * Math.pow(0.5, t / N) * Math.pow(speedupFactor, t) * scalabilityFactor;
+        }
+
+        // Generate data
+        const timeRange = Array.from({length: 121}, (_, i) => i);
+        const mooresData = timeRange.map(t => mooresLaw(t));
+        const leschiksData = timeRange.map(t => leschiksLaw(t, 12));
+        const leschiksDataCost = timeRange.map(t => leschiksLawCost(t, 12));
+
+        // Chart 1: Comparison
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        new Chart(comparisonCtx, {
+            type: 'line',
+            data: {
+                labels: timeRange,
+                datasets: [{
+                    label: "Moore's Law",
+                    data: mooresData,
+                    borderColor: 'blue',
+                    fill: false
+                }, {
+                    label: "Leschik's Law",
+                    data: leschiksData,
+                    borderColor: 'red',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        title: {
+                            display: true,
+                            text: 'Relative Performance (log scale)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (months)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart 2: N Impact
+        const nImpactCtx = document.getElementById('nImpactChart').getContext('2d');
+        const nImpactChart = new Chart(nImpactCtx, {
+            type: 'line',
+            data: {
+                labels: timeRange,
+                datasets: [{
+                    label: "Leschik's Law",
+                    data: leschiksData,
+                    borderColor: 'red',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        title: {
+                            display: true,
+                            text: 'Relative Performance (log scale)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (months)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // N Slider
+        const nSlider = document.getElementById('nSlider');
+        const nValue = document.getElementById('nValue');
+        nSlider.oninput = function() {
+            nValue.innerHTML = this.value;
+            const newData = timeRange.map(t => leschiksLaw(t, parseInt(this.value)));
+            nImpactChart.data.datasets[0].data = newData;
+            nImpactChart.update();
+        }
+        nValue.innerHTML = nSlider.value;
+
+        // Chart 3: Cost Reduction
+        const costReductionCtx = document.getElementById('costReductionChart').getContext('2d');
+        new Chart(costReductionCtx, {
+            type: 'line',
+            data: {
+                labels: timeRange,
+                datasets: [{
+                    label: "Cost Reduction",
+                    data: leschiksDataCost,
+                    borderColor: 'green',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        title: {
+                            display: true,
+                            text: 'Relative Cost (log scale)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (months)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart 4: Performance/Cost Ratio
+        const performanceCostRatioCtx = document.getElementById('performanceCostRatioChart').getContext('2d');
+        new Chart(performanceCostRatioCtx, {
+            type: 'line',
+            data: {
+                labels: timeRange,
+                datasets: [{
+                    label: "Performance/Cost Ratio",
+                    data: timeRange.map(t => leschiksLaw(t, 12) / leschiksLawCost(t, 12)),
+                    borderColor: 'purple',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        title: {
+                            display: true,
+                            text: 'Performance/Cost Ratio (log scale)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (months)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Animation
+        gsap.to(".node", {
+            duration: 10,
+            x: "750px",
+            ease: "power4.out",
+            scale: 10,
+            repeat: -1,
+            yoyo: true
+        });
+    </script>
+</body>
+</html>
